@@ -129,6 +129,68 @@ def run_pipeline(data: dict, progress_callback):
         except Exception as e:
              logs.append(f"❌ Err Audio: {e}")
 
+    # --- Étape 3.5 : Avatar Parlant (D-ID) ---
+    talking_avatar_url = None
+    if not mock_mode and audio_bytes:
+        try:
+            logs.append("🎭 Génération avatar parlant...")
+            progress_callback(50, "Avatar parlant (D-ID)...", logs)
+            
+            # Import D-ID client
+            from app.services.did_client import did_client
+            from app.services.avatar_generator import avatar_generator
+            from app.services.script_extractor import extract_avatar_description
+            import tempfile
+            import os
+            
+            # Check if user provided an avatar image
+            avatar_image_url = data.get('avatar_image')
+            
+            if not avatar_image_url:
+                # Extract avatar description from prompt
+                avatar_desc = extract_avatar_description(data.get('topic', ''))
+                
+                if avatar_desc:
+                    # Generate avatar with DALL-E 3
+                    logs.append(f"🎨 Génération avatar: {avatar_desc[:50]}...")
+                    avatar_image_url = avatar_generator.generate_avatar(avatar_desc)
+                    
+                    if avatar_image_url:
+                        logs.append("✅ Avatar généré avec DALL-E 3")
+            
+            # If we have an avatar image and audio, create talking video
+            if avatar_image_url and audio_bytes:
+                # Upload audio to Supabase Storage to get public URL
+                from app.services.storage_utils import upload_audio_to_storage
+                
+                logs.append("📤 Upload audio vers Supabase...")
+                public_audio_url = upload_audio_to_storage(audio_bytes)
+                
+                if public_audio_url:
+                    logs.append("✅ Audio uploadé")
+                    
+                    # Create talking avatar with D-ID
+                    logs.append("🎭 Création avatar parlant avec D-ID...")
+                    talking_avatar_url = did_client.create_talking_avatar(
+                        image_url=avatar_image_url,
+                        audio_url=public_audio_url,
+                        timeout=120
+                    )
+                    
+                    if talking_avatar_url:
+                        logs.append("✅ Avatar parlant créé avec D-ID !")
+                        # Use talking avatar as first video clip
+                        found_videos.insert(0, talking_avatar_url)
+                    else:
+                        logs.append("⚠️ D-ID indisponible, utilise visuels standards")
+                else:
+                    logs.append("⚠️ Upload audio échoué, utilise visuels standards")
+            
+        except Exception as e:
+            logs.append(f"⚠️ Avatar parlant ignoré: {e}")
+            import traceback
+            print(f"D-ID error: {traceback.format_exc()}")
+
     # --- Étape 4 : Visuels (Hybride: Pexels + Runway) ---
     logs.append("🖼️ Acquisition Visuels (Hybride)...")
     progress_callback(60, "Acquisition Visuels...", logs)

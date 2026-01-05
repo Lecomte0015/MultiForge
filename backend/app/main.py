@@ -31,6 +31,7 @@ class VideoRequest(BaseModel):
     visual_style: str = "cinematic"
     platform: str = "tiktok"
     voice_id: str = "f37Tyb9RuhPPJKa60pUr"  # User's selected voice
+    avatar_image: Optional[str] = None  # URL or base64 of avatar image
     brand_color: Optional[str] = None
 
 class JobResponse(BaseModel):
