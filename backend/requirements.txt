@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+celery
+redis
+pydantic
+pydantic-settings
+requests
+httpx>=0.24.0
+python-multipart
+python-dotenv
+moviepy==1.0.3
+supabase
+elevenlabs

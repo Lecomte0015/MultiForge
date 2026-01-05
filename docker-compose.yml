@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # --- UI ---
+  # --- UI (Running Locally for Performance) ---
+  # frontend:
+  #   build: 
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=http://localhost:8000
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - backend
+
+  # --- API ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - MOCK_MODE=False
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - redis
+
+  # --- Worker ---
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - MOCK_MODE=False
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+    command: celery -A app.workers.celery_worker.celery_app worker --loglevel=info
+    depends_on:
+      - redis
+
+  # --- Broker ---
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"

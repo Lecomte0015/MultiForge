@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+    --primary: 263 70% 50%; /* Violet MultiForge */
+    --primary-foreground: 210 40% 98%;
+    --radius: 0.5rem;
+  }
+}
+
+body {
+  @apply bg-slate-950 text-white font-sans antialiased;
+}
+
+.matrix-text {
+  font-family: 'Courier New', Courier, monospace;
+}
